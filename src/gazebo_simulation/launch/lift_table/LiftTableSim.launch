@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+	<!-- <include file="$(find sot_talos_balance)/launch/talos_gazebo_half_sitting.launch"/> -->
+	<node name="spawn_sdf_table" pkg="gazebo_ros" type="spawn_model" args="-file $(find gazebo_simulation)/model/table.sdf -sdf -model my_table -x 1.45 -y 0.85 -Y 0.55" />
+
+	<include file="$(find roscontrol_sot_talos)/launch/sot_talos_controller_gazebo.launch"/>  
+
+	<node pkg="gazebo_simulation" type="PositionHandsSim" name="PositionHandsSim"/>
+	<node pkg="gazebo_simulation" type="PositionTableSim" name="PositionTableSim"/>	
+	<node pkg="gazebo_simulation" type="PositionManagerHandsSim" name="PositionManagerHandsSim" output="screen" args="echo /position_table2" launch-prefix="xterm -e"/> 
+
+</launch>  
