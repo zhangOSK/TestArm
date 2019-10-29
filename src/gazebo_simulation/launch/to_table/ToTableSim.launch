@@ -35,7 +35,11 @@
         </include>
 
   <!-- default controllers -->
-  <include file="$(find talos_bringup)/launch/talos_bringup.launch" />
+  <!--include file="$(find talos_bringup)/launch/talos_bringup.launch" /-->
+
+  <include file="$(find talos_controller_configuration)/launch/position_controllers.launch">
+      <arg name="robot" value="upper_body" />
+  </include>
 
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" >
      <remap from="/joint_states" to="/ang/set_whole_joint_states" />

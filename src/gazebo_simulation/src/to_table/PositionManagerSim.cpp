@@ -17,6 +17,15 @@
 #include "pinocchio/parsers/urdf.hpp"
 #include <sensor_msgs/JointState.h>
 
+// arm controller action client
+#include <string>
+#include <boost/shared_ptr.hpp>
+#include <actionlib/client/simple_action_client.h>
+#include <control_msgs/FollowJointTrajectoryAction.h>
+#include <ros/topic.h>
+
+
+
 class MultipleSubscribeAndPublishSim
 {
 private:
@@ -39,6 +48,9 @@ private:
 
   Eigen::VectorXd qArml, qArml_init;
   Eigen::Vector3d lwPre;
+
+  typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> arm_control_client;
+  typedef boost::shared_ptr< arm_control_client>  arm_control_client_Ptr;
 
 public:
 
@@ -210,7 +222,88 @@ public:
     }
     pub_whole_joint.publish(joint_whole);
 
+    // ---------------arm control client---------------- 
+    arm_control_client_Ptr ArmClient;
+    createArmClient(ArmClient);
+    // Generates the goal for the TIAGo's arm
+    control_msgs::FollowJointTrajectoryGoal arm_goal;
+    waypoints_arm_goal(arm_goal); //qarml
+    ROS_INFO_STREAM("waypoint setted");
+
+    // Sends the command to start the given trajectory 1s from now
+    arm_goal.trajectory.header.stamp = ros::Time::now() + ros::Duration(1);
+    ArmClient->sendGoal(arm_goal);
+
+    // Wait for trajectory execution
+    while(!(ArmClient->getState().isDone()) && ros::ok())
+    {
+      ros::Duration(1.0).sleep(); // sleep for 1 seconds
+      ROS_INFO_STREAM("sleep 1s to wait state is done");
+    }
   }
+
+  //------ Create a ROS action client to move Talos's arm---------
+  void createArmClient(arm_control_client_Ptr& actionClient)
+  {
+    ROS_INFO("Creating action client to arm controller ...");
+    actionClient.reset( new arm_control_client("/left_arm_controller/follow_joint_trajectory") );
+    int iterations = 0, max_iterations = 3;
+    // Wait for arm controller action server to come up
+    while( !actionClient->waitForServer(ros::Duration(2.0)) && ros::ok() && iterations < max_iterations )
+    {
+      ROS_DEBUG("Waiting for the arm_controller_action server to come up");
+      ++iterations;
+    }
+
+    if ( iterations == max_iterations )
+      throw std::runtime_error("Error in createArmClient: arm controller action server not available");
+    
+  }
+
+  // Generates a simple trajectory with two waypoints to move Talos' arm 
+  void waypoints_arm_goal(control_msgs::FollowJointTrajectoryGoal& goal)//, Eigen::VectorXd & qArml)
+  {
+    goal.trajectory.joint_names.push_back("arm_left_1_joint");
+    goal.trajectory.joint_names.push_back("arm_left_2_joint");
+    goal.trajectory.joint_names.push_back("arm_left_3_joint");
+    goal.trajectory.joint_names.push_back("arm_left_4_joint");
+    goal.trajectory.joint_names.push_back("arm_left_5_joint");
+    goal.trajectory.joint_names.push_back("arm_left_6_joint");
+    goal.trajectory.joint_names.push_back("arm_left_7_joint");
+
+    goal.trajectory.points.resize(1);
+
+    //0.25847, 0.173046, -0.0002, -0.525366, 0, 0, 0.1
+    // Positions
+    int index = 0;
+    goal.trajectory.points[index].positions.resize(7);
+
+    goal.trajectory.points[index].positions[0] = 0.0;
+    goal.trajectory.points[index].positions[1] = 0.0;
+    goal.trajectory.points[index].positions[2] = 0.0;
+    goal.trajectory.points[index].positions[3] = -0.5;
+    goal.trajectory.points[index].positions[4] = 0.0;
+    goal.trajectory.points[index].positions[5] = -0.0;
+    goal.trajectory.points[index].positions[6] = 0.1;
+    /*
+    goal.trajectory.points[index].positions[0] = qArml(0);
+    goal.trajectory.points[index].positions[1] = qArml(1);
+    goal.trajectory.points[index].positions[2] = qArml(2);
+    goal.trajectory.points[index].positions[3] = qArml(3);
+    goal.trajectory.points[index].positions[4] = qArml(4);
+    goal.trajectory.points[index].positions[5] = qArml(5);
+    goal.trajectory.points[index].positions[6] = qArml(6);
+    */
+    // Velocities
+    goal.trajectory.points[index].velocities.resize(7);
+    for (int j = 0; j < 7; ++j)
+    {
+      goal.trajectory.points[index].velocities[j] = 1.0;
+    }
+    // To be reached x second after starting along the trajectory
+    goal.trajectory.points[index].time_from_start = ros::Duration(1);
+  }
+  //-------------------------------------------------------------------------------------------
 
   MultipleSubscribeAndPublishSim()
   {
