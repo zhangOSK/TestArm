@@ -17,36 +17,35 @@
   <arg name="torso_pose" default="-J torso_1_joint 0.0 -J torso_2_joint 0.006761"/>
   <arg name="gzpose" default="-x 0.0 -y 0.0 -z 1.00 -R 0.0 -P 0.0 -Y 0.0 $(arg left_leg_pose) $(arg right_leg_pose) $(arg left_arm_pose) $(arg right_arm_pose) $(arg torso_pose) -u"/>
 
+  <arg name="load_model" default="true"/>
+  <arg name="robot"  default="full_v1"/> 
+  <arg name="default_configuration_type" default="zeros"/>
 
-        <arg name="load_model" default="true"/>
-        <arg name="robot"  default="full_v1"/> 
-        <arg name="default_configuration_type" default="zeros"/>
+  <group if="$(arg load_model)">
+    <include file="$(find talos_description)/robots/upload.launch" >
+      <arg name="robot" value="$(arg robot)"/>
+    </include>
+  </group>
 
-        <group if="$(arg load_model)">
-          <include file="$(find talos_description)/robots/upload.launch" >
-            <arg name="robot" value="$(arg robot)"/>
-          </include>
-        </group>
+  <!-- spawn robot in simulation -->
+  <include file="$(find talos_gazebo)/launch/talos_spawn.launch">
+    <arg name="robot"  value="$(arg robot)"/>
+    <arg name="gzpose" value="$(arg gzpose)"/>
+  </include>
 
-        <!-- spawn robot in simulation -->
-        <include file="$(find talos_gazebo)/launch/talos_spawn.launch">
-          <arg name="robot"  value="$(arg robot)"/>
-          <arg name="gzpose" value="$(arg gzpose)"/>
-        </include>
-
-  <!-- default controllers -->
-  <!--include file="$(find talos_bringup)/launch/talos_bringup.launch" /-->
+  <!-- default controllers, this controller publish joint_states -->
+  <include file="$(find talos_bringup)/launch/talos_bringup.launch" />
 
   <include file="$(find talos_controller_configuration)/launch/position_controllers.launch">
       <arg name="robot" value="upper_body" />
   </include>
 
-  <node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" >
+  <!--node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" >
      <remap from="/joint_states" to="/ang/set_whole_joint_states" />
      <param name="tf_prefix" value="/ang" />
-  </node>
+  </node-->
 
-  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find gazebo_simulation)/config/display_ang_talos.rviz" />
+  <!--node type="rviz" name="rviz" pkg="rviz" args="-d $(find gazebo_simulation)/config/display_ang_talos.rviz" /-->
 
 </launch>
 
