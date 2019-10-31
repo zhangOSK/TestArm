@@ -99,12 +99,9 @@ public:
     float distance2 = distance(pos2_table_mocap,pos_robot_mocap);   
 
     if (distance1 < distance2)
-    { 
-      //ROS_INFO_STREAM("Pos1 choisie! ----------------------------------------------------");      
+    {      
       delta = deltaFct(pos1_table_mocap,qT1,pos_robot_mocap,qR);
-
-    } else {
-      //ROS_INFO_STREAM("Pos2 choisie! ----------------------------------------------------");         
+    } else {        
       delta = deltaFct(pos2_table_mocap,qT2,pos_robot_mocap,qR);
     }
 
@@ -177,8 +174,6 @@ public:
     joint_arm.name.resize(7);
     joint_arm.position.resize(7);
 
-    ROS_INFO_STREAM("read, q0 = "<<qArml(0)<<", q1 = "<<qArml(1)<<", q2 = "<<qArml(2));
-    ROS_INFO_STREAM("read, lwPre0 = "<<lwPre(0)<<"lwPre1 = "<<lwPre(1)<<"lwPre2 = "<<lwPre(2));
     //at beginning, set half-sitting as initial pose for arm 
     if(qArml(0) == 0 && qArml(1) == 0 &&
        qArml(2) == 0 && qArml(3) == 0   )
@@ -229,14 +224,13 @@ public:
     // ---------------arm control client---------------- 
     if (!ros::Time::waitForValid(ros::WallDuration(2.0))) // NOTE: Important when using simulated clock
     {
-      ROS_INFO_STREAM("!!!Timed-out waiting for valid time --------");
+      //ROS_INFO_STREAM("!!!Timed-out waiting for valid time --------");
     }
 
     arm_control_client_Ptr ArmClient;
     createArmClient(ArmClient);
     // Generates the goal for the Talos's arm
     control_msgs::FollowJointTrajectoryGoal arm_goal;
-    ROS_INFO_STREAM("before goal, q0 = "<<qArml(0)<<", q1 = "<<qArml(1)<<", q2 = "<<qArml(2));
     waypoints_arm_goal(arm_goal, qArml);
 
     // Sends the command to start the given trajectory 1s from now
@@ -340,6 +334,9 @@ void MultipleSubscribeAndPublishSim::iKwithImpedanceOnLeftArm(Eigen::VectorXd & 
     }
     pinocchio::jointJacobian(modelArm,dataArm,q,JOINT_ID,J);;
     const Eigen::VectorXd v     = - svd.compute(J.topRows<3>()).solve(err);
+    ROS_INFO_STREAM("v0="<<v(0)<<", v1="<<v(1)<<", v2="<<v(2)<<", v3="<<v(3)<<", v4="<<v(4)<<", v5="<<v(5)<<", v6="<<v(6));
+    if(v(0)>100 || v(1)>100 || v(2)>100 || v(3)>100 || v(4)>100 || v(5)>100 || v(6)>100)
+    {ROS_INFO_STREAM("-------!!!Big veloctiy!!!--------");}
     q = pinocchio::integrate(modelArm,q,v*DT);
   }
 }
@@ -361,12 +358,12 @@ Eigen::Vector3d MultipleSubscribeAndPublishSim::impHandPos(Eigen::Vector3d & lwP
   flw(0) = flwX;
   flw_shoulder = flw;
 
-  //robot pulls only at DS;;; Currently, just pull if hand is far behind body
-  if(lwPre(0) < -0.03 || (lwCur(0) - lwPre(0)) > 0)
+  //robot pulls only at DS;;; Currently, just pull if hand is far behind body  -0.03, 0.1
+  if(lwPre(0) < -18 || (lwCur(0) - lwPre(0)) > 0)
   {
     fDS(0) = vel_ * 27000;
   }
-  if(lwPre(0) > 0.1 && (lwCur(0) - lwPre(0)) >= 0)
+  if(lwPre(0) > 18 && (lwCur(0) - lwPre(0)) >= 0)
   {
     fDS(0) = 0.0;
   }
@@ -406,9 +403,6 @@ Eigen::Vector3d MultipleSubscribeAndPublishSim::impHandPos(Eigen::Vector3d & lwP
 
 void MultipleSubscribeAndPublishSim::createArmClient(arm_control_client_Ptr& actionClient)
 {
-  ROS_INFO("Creating action client to arm controller ...");
-
-  ////actionClient.reset( new arm_control_client("/arm_controller/follow_joint_trajectory") );
   actionClient.reset( new arm_control_client("/left_arm_controller/follow_joint_trajectory") );
   
   int iterations = 0, max_iterations = 3;
@@ -443,13 +437,6 @@ void MultipleSubscribeAndPublishSim::waypoints_arm_goal(control_msgs::FollowJoin
   // First trajectory point
   int index = 0;
   goal.trajectory.points[index].positions.resize(7);
-  /*goal.trajectory.points[index].positions[0] = 0.0;
-  goal.trajectory.points[index].positions[1] = 0.0;
-  goal.trajectory.points[index].positions[2] = 0.0;
-  goal.trajectory.points[index].positions[3] = -0.5;
-  goal.trajectory.points[index].positions[4] = 0.0;
-  goal.trajectory.points[index].positions[5] = -0.0;
-  goal.trajectory.points[index].positions[6] = 0.1;*/
 
   goal.trajectory.points[index].positions[0] = qArml(0);
   goal.trajectory.points[index].positions[1] = qArml(1);
