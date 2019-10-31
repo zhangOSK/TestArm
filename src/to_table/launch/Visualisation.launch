@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+	<!-- address of the computer connected to the Qualisys motion tracking system :
+		"yokosan" or "192.168.1.183" -->
+	<param name="server_address" type="string" value="140.93.16.160" /> 
+	
+	<!-- Recovery of MoCap data -->
+	<node pkg="to_table" type="Qualisys2Ros" name="Qualisys2Ros"/>
+
+	<!-- Visualization on RViz-->
+	<node pkg="rviz" type="rviz" name="rviz"/>	
+	<node pkg="to_table" type="PositionFilterRViz" name="PositionFilterRViz"/>
+	<node pkg="to_table" type="RoomRViz" name="RoomRViz"/>	
+	<node pkg="to_table" type="LinkBetweenQualisysAndBaselink" name="LinkBetweenQualisysAndBaselink"/>
+
+</launch>

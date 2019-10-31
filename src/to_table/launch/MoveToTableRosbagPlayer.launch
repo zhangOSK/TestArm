@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+	
+	<!-- Distance wanted between the robot_torso body and the table edge -->
+	<param name="dist_table_robot" type="double" value="0.9" /> 
+
+	<!-- Linear and angular velocity thresholds -->
+	<param name="linear_threshold" type="double" value="0.1" />
+	<param name="angular_threshold" type="double" value="0.12" />	 
+
+	<!-- Stop -->
+	<param name="xy_stop" type="double" value="0.075" /> 
+	<param name="theta_stop" type="double" value="0.07" /> 
+
+	<!-- Print marker of the goal -->
+	<param name="print_markers" type="bool" value="true" /> 
+
+	<!-- Demonstration -->
+	<param name="demo" type="bool" value="false" /> 
+
+	<!-- Playing the experiment -->	
+	<arg name="path" default="/local/imaroger/catkin_ws/src/to_table/bagfile/" />
+	<node pkg="rosbag" type="play" name="player" output="screen" args="-l $(arg path)_2019-09-25-17-26-46.bag" />		
+
+	<!-- Order computing and sending -->
+	<node pkg="to_table" type="PositionFilter" name="PositionFilter" output="screen" launch-prefix="xterm -e" />
+	<node pkg="to_table" type="PositionManager" name="PositionManager" output="screen" launch-prefix="xterm -e" />
+
+	<!-- Visualization on RViz-->
+	<node pkg="rviz" type="rviz" name="rviz"/>	
+	<node pkg="to_table" type="PositionFilterRViz" name="PositionFilterRViz"/>
+	<node pkg="to_table" type="RoomRViz" name="RoomRViz"/>
+	<node pkg="to_table" type="LinkBetweenQualisysAndBaselink" name="LinkBetweenQualisysAndBaselink"/>
+
+</launch>
