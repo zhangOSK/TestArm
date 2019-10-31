@@ -1,8 +1,0 @@
-prefix=/home/ang/catkin_ws/devel
-
-Name: lift_table
-Description: Description of lift_table
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/ang/catkin_ws/devel/lib 
-Requires: 

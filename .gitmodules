@@ -1,3 +1,0 @@
-[submodule "src/gazebo_simulation/cmake"]
-	path = src/gazebo_simulation/cmake
-	url = git://github.com/jrl-umi3218/jrl-cmakemodules.git
